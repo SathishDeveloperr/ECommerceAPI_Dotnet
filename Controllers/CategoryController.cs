@@ -141,7 +141,7 @@ namespace ECommerceAPI.Controllers
                     return NotFound(new { message = "No categories found" });
                 }
 
-                var baseUrl = $"{Request.Scheme}://{Request.Host}/CategoryImages/";
+                var baseUrl = $"{Request.Scheme}://{Request.Host}/tmp/CategoryImages/";
 
                 var categoryDtos = categories.Select(category => new
                 {
@@ -173,7 +173,7 @@ namespace ECommerceAPI.Controllers
                     return NotFound(new { message = "No category found" });
                 }
 
-                var baseUrl = $"{Request.Scheme}://{Request.Host}/CategoryImages/";
+                var baseUrl = $"{Request.Scheme}://{Request.Host}/tmp/CategoryImages/";
 
                 var categoryDto = new
                 {

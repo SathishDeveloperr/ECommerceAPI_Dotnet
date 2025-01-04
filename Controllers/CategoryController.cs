@@ -33,7 +33,10 @@ namespace ECommerceAPI.Controllers
 
                 if (category.ImageFile != null)
                 {
-                    var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "CategoryImages");
+                    // Use Render's persistent storage location
+                    var folderPath = Path.Combine("/mnt/data", "CategoryImages");
+
+                    // Ensure the directory exists
                     if (!Directory.Exists(folderPath))
                     {
                         Directory.CreateDirectory(folderPath);
@@ -42,12 +45,14 @@ namespace ECommerceAPI.Controllers
                     var fileName = Guid.NewGuid().ToString() + Path.GetExtension(category.ImageFile.FileName);
                     var filePath = Path.Combine(folderPath, fileName);
 
+                    // Save the file
                     using (var stream = new FileStream(filePath, FileMode.Create))
                     {
                         await category.ImageFile.CopyToAsync(stream);
                     }
 
-                    category.CategoryImage = "/CategoryImages/" + fileName;
+                    // Set the image URL to access the file
+                    category.CategoryImage = "/files/CategoryImages/" + fileName;
                 }
 
                 var result = await categoryRepository.CreateCategoryAsync(category);

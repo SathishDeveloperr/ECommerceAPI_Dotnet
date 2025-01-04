@@ -16,9 +16,12 @@ namespace ECommerceAPI.Controllers
     {
         private readonly ICategoryRepository categoryRepository;
 
-        public CategoryController(ICategoryRepository categoryRepository)
+        public ICloudinaryService CloudinaryService { get; }
+
+        public CategoryController(ICategoryRepository categoryRepository,ICloudinaryService cloudinaryService)
         {
             this.categoryRepository = categoryRepository;
+            CloudinaryService = cloudinaryService;
         }
 
         [HttpPost("CreateCategory")]
@@ -31,28 +34,10 @@ namespace ECommerceAPI.Controllers
                     return BadRequest(new { message = "Category cannot be null" });
                 }
 
-                if (category.ImageFile != null)
-                {
-                    var folderPath = Path.Combine(Path.GetTempPath(), "CategoryImages");
-
-                    if (!Directory.Exists(folderPath))
-                    {
-                        Directory.CreateDirectory(folderPath);
-                    }
-
-                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(category.ImageFile.FileName);
-                    var filePath = Path.Combine(folderPath, fileName);
-
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await category.ImageFile.CopyToAsync(stream);
-                    }
-
-                    category.CategoryImage = Path.Combine("/tmp/CategoryImages/", fileName);
-                }
+                var imageUrl = await CloudinaryService.UploadImageAsync(category.ImageFile);
+                category.CategoryImage = imageUrl;
 
                 var result = await categoryRepository.CreateCategoryAsync(category);
-
                 if (!result)
                 {
                     return BadRequest(new { message = "Category creation failed" });
@@ -67,7 +52,7 @@ namespace ECommerceAPI.Controllers
         }
 
         [HttpPut("UpdateCategory")]
-        public async Task<IActionResult> UpdateCategory([FromForm]Category category)
+        public async Task<IActionResult> UpdateCategory([FromForm] Category category)
         {
             try
             {
@@ -76,22 +61,14 @@ namespace ECommerceAPI.Controllers
                     return BadRequest(new { message = "Category cannot be null" });
                 }
 
-                var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "CategoryImages");
-                if (!Directory.Exists(folderPath))
+                if (category.ImageFile == null || category.ImageFile.Length == 0)
                 {
-                    Directory.CreateDirectory(folderPath);
+                    return BadRequest(new { message = "Invalid image file" });
                 }
 
-                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(category.ImageFile.FileName);
-                var filePath = Path.Combine(folderPath, fileName);
+                var imageUrl = await CloudinaryService.UploadImageAsync(category.ImageFile);
 
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await category.ImageFile.CopyToAsync(stream);
-                }
-
-                category.CategoryImage = "/CategoryImages/" + fileName;
-
+                category.CategoryImage = imageUrl;
 
                 var updatedCategory = await categoryRepository.UpdateCategoryAsync(category);
 
@@ -100,13 +77,14 @@ namespace ECommerceAPI.Controllers
                     return NotFound(new { message = "Category not found" });
                 }
 
-                return Ok(new { message = "Category Updated Successfully" });
+                return Ok(new { message = "Category Updated Successfully", imageUrl });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = ex.Message });
             }
         }
+
 
         [HttpDelete("DeleteCategory/{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
@@ -141,18 +119,9 @@ namespace ECommerceAPI.Controllers
                     return NotFound(new { message = "No categories found" });
                 }
 
-                var baseUrl = $"{Request.Scheme}://{Request.Host}/tmp/CategoryImages/";
+               
 
-                var categoryDtos = categories.Select(category => new
-                {
-                    CategoryId = category.CategoryId,
-                    CategoryName = category.CategoryName,
-                    CategoryImageUrl = string.IsNullOrEmpty(category.CategoryImage)
-                        ? null
-                        : baseUrl + Path.GetFileName(category.CategoryImage)
-                }).ToList();
-
-                return Ok(categoryDtos);
+                return Ok(categories);
             }
             catch (Exception ex)
             {
@@ -172,19 +141,7 @@ namespace ECommerceAPI.Controllers
                 {
                     return NotFound(new { message = "No category found" });
                 }
-
-                var baseUrl = $"{Request.Scheme}://{Request.Host}/tmp/CategoryImages/";
-
-                var categoryDto = new
-                {
-                    CategoryId = category.CategoryId,
-                    CategoryName = category.CategoryName,
-                    CategoryImageUrl = string.IsNullOrEmpty(category.CategoryImage)
-                        ? null
-                        : baseUrl + Path.GetFileName(category.CategoryImage)
-                };
-
-                return Ok(categoryDto);
+                return Ok(category);
             }
             catch (Exception ex)
             {

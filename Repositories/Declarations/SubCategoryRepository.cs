@@ -25,9 +25,9 @@ namespace ECommerceAPI.Repositories.Declarations
             parameters.Add("@SubcategoryName", subcategory.SubCategoryName);
             parameters.Add("@CategoryId", subcategory.CategoryId);
             parameters.Add("@SubCategoryImage", subcategory.SubCategoryImage);
-            var result = await connection.QuerySingleOrDefaultAsync<SubCategory>("sp_CreateSubcategory", parameters, commandType: CommandType.StoredProcedure);
+            var result = await connection.ExecuteAsync("sp_CreateSubcategory", parameters, commandType: CommandType.StoredProcedure);
 
-            return result != null;
+            return result > 0;
         }
 
         public async Task<bool> DeleteSubcategoryAsync(int subcategoryId)
@@ -62,7 +62,7 @@ namespace ECommerceAPI.Repositories.Declarations
             var parameters = new DynamicParameters();
             parameters.Add("@SubcategoryId", subcategoryId);
 
-            return await connection.QuerySingleOrDefaultAsync<SubCategory>(
+            return await connection.QuerySingleOrDefaultAsync(
                 "sp_GetSubcategoryById",
                 parameters,
                 commandType: CommandType.StoredProcedure);
@@ -76,8 +76,8 @@ namespace ECommerceAPI.Repositories.Declarations
             parameters.Add("@SubcategoryName", subcategory.SubCategoryName);
             parameters.Add("@SubCategoryImage", subcategory.SubCategoryImage);
             parameters.Add("@CategoryId", subcategory.CategoryId);
-            var result = await connection.QuerySingleOrDefaultAsync<SubCategory>("sp_UpdateSubcategory", parameters, commandType: CommandType.StoredProcedure);
-            return result != null;
+            var result = await connection.ExecuteAsync("sp_UpdateSubcategory", parameters, commandType: CommandType.StoredProcedure);
+            return result > 0;
         }
     }
 }

@@ -24,10 +24,13 @@ namespace ECommerceAPI.Controllers
         private readonly IUserRepository userRepository;
         private readonly IConfiguration configuration;
 
-        public UsersController(IUserRepository userRepository, IConfiguration configuration)
+        public ICloudinaryService CloudinaryService { get; }
+
+        public UsersController(IUserRepository userRepository, IConfiguration configuration,ICloudinaryService cloudinaryService)
         {
             this.userRepository = userRepository;
             this.configuration = configuration;
+            CloudinaryService = cloudinaryService;
         }
 
         [HttpPost("register")]
@@ -62,25 +65,10 @@ namespace ECommerceAPI.Controllers
                     return BadRequest(new { message = "Invalid JWT token or UserId" });
                 }
 
-                if (user.ImageFile != null)
-                {
-                    var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "UserImages");
-                    if (!Directory.Exists(folderPath))
-                    {
-                        Directory.CreateDirectory(folderPath);
-                    }
 
-                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(user.ImageFile.FileName);
-                    var filePath = Path.Combine(folderPath, fileName);
+                var imageUrl = await CloudinaryService.UploadImageAsync(user.ImageFile);
 
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await user.ImageFile.CopyToAsync(stream);
-                    }
-
-                    user.ProfilePicture = "/UserImages/" + fileName;
-                }
-
+                user.ProfilePicture = imageUrl;
 
                 int i = Convert.ToInt32(userId);
                 user.UserId = i;

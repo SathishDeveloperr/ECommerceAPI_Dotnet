@@ -24,11 +24,9 @@ namespace ECommerceAPI.Repositories.Declarations
             parameters.Add("@CategoryName", category.CategoryName);
             parameters.Add("@CategoryImage", category.CategoryImage);
 
+            var result = await connection.ExecuteAsync("sp_CreateCategory", parameters, commandType: CommandType.StoredProcedure);
 
-
-            var result = await connection.QuerySingleOrDefaultAsync<Category>("sp_CreateCategory", parameters, commandType: CommandType.StoredProcedure);
-
-            return result != null;
+            return result > 0;
         }
 
 
@@ -70,16 +68,17 @@ namespace ECommerceAPI.Repositories.Declarations
                 commandType: CommandType.StoredProcedure);
         }
 
-        public async Task<bool> UpdateCategoryAsync(Category Category)
+        public async Task<bool> UpdateCategoryAsync(Category category)
         {
             using var connection = dbContext.Database.GetDbConnection();
             var parameters = new DynamicParameters();
-            parameters.Add("@CategoryId", Category.CategoryId);
-            parameters.Add("@CategoryName", Category.CategoryName);
-            parameters.Add("@CategoryImage", Category.CategoryImage);
-            var result = await connection.QuerySingleOrDefaultAsync<Category>("sp_UpdateCategory", parameters, commandType: CommandType.StoredProcedure);
-            return result != null;
+            parameters.Add("@CategoryId", category.CategoryId);
+            parameters.Add("@CategoryName", category.CategoryName);
+            parameters.Add("@CategoryImage", category.CategoryImage);
+            var affectedRows = await connection.ExecuteAsync("sp_UpdateCategory", parameters, commandType: CommandType.StoredProcedure);
+            return affectedRows > 0;
         }
+
 
     }
 }

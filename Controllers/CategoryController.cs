@@ -33,7 +33,8 @@ namespace ECommerceAPI.Controllers
 
                 if (category.ImageFile != null)
                 {
-                    var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "CategoryImages");
+                    var folderPath = Path.Combine(Path.GetTempPath(), "CategoryImages");
+
                     if (!Directory.Exists(folderPath))
                     {
                         Directory.CreateDirectory(folderPath);
@@ -47,7 +48,7 @@ namespace ECommerceAPI.Controllers
                         await category.ImageFile.CopyToAsync(stream);
                     }
 
-                    category.CategoryImage = "/CategoryImages/" + fileName;
+                    category.CategoryImage = Path.Combine("/tmp/CategoryImages/", fileName);
                 }
 
                 var result = await categoryRepository.CreateCategoryAsync(category);
